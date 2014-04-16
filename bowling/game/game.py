@@ -1,9 +1,16 @@
 class Game(object):
-    def __init__(self):
-        self.available_frames = [Frame(), Frame(), Frame(), Frame(), Frame(),
-                                 Frame(), Frame(), Frame(), Frame(), TenthFrame()]
+    def __init__(self, number_of_frames):
+        self.available_frames = self.create_frames(number_of_frames)
         self.completed_frames = []
         self.current_frame = self.available_frames.pop(0)
+
+    @staticmethod
+    def create_frames(how_many):
+        frames = []
+        for n in range(how_many-1):
+            frames.append(Frame())
+        frames.append(LastFrame())
+        return frames
 
     def roll(self, pins):
         if self.current_frame.has_no_rolls_left:
@@ -15,24 +22,25 @@ class Game(object):
         self.current_frame = self.available_frames.pop(0)
 
     def score(self):
-        self.completed_frames.append(self.current_frame)
         points = 0
-        for index, frame in enumerate(self.completed_frames):
+        for index, frame in enumerate(self.all_frames):
             points += frame.score
-            if frame.score == 10:
+            if frame.has_spare:
+                points += self.all_frames[index+1].completed_rolls[0].score
+            if frame.has_strike:
                 try:
-                    points += self.completed_frames[index+1].completed_rolls[0].score
-                except IndexError:
-                    pass
-            if frame.is_strike:
-                try:
-                    points += self.completed_frames[index+1].completed_rolls[1].score
+                    points += self.all_frames[index+1].completed_rolls[0].score
+                    points += self.all_frames[index+1].completed_rolls[1].score
                 except IndexError:
                     try:
-                        points += self.completed_frames[index+2].completed_rolls[0].score
+                        points += self.all_frames[index+2].completed_rolls[0].score
                     except IndexError:
                         pass
         return points
+
+    @property
+    def all_frames(self):
+        return self.completed_frames + [self.current_frame]
 
 
 class Frame(object):
@@ -40,20 +48,30 @@ class Frame(object):
         self.available_rolls = [Roll(), Roll()]
         self.completed_rolls = []
         self.score = 0
-        self.is_spare = False
-        self.is_strike = False
+        self.has_spare = False
+        self.has_strike = False
 
     def roll(self, pins):
-        current_roll = self.available_rolls.pop(0)
+        current_roll = self.get_next_roll()
         current_roll.score = pins
         self.score += current_roll.score
-        if self.score == 10:
-            if self.has_rolls_left:
-                self.is_strike = True
-                self.available_rolls.pop(0)
-            else:
-                self.is_spare = True
+        if self.is_spare:
+            self.has_spare = True
+        if current_roll.is_strike:
+            self.has_strike = True
+            self.available_rolls.pop(0)
         self.completed_rolls.append(current_roll)
+
+    def get_next_roll(self):
+        return self.available_rolls.pop(0)
+
+    @property
+    def is_spare(self):
+        return self.score == 10 and len(self.available_rolls) == 0
+
+    @property
+    def is_strike(self):
+        return self.score == 10 and len(self.available_rolls) > 0
 
     @property
     def has_no_rolls_left(self):
@@ -64,23 +82,23 @@ class Frame(object):
         return len(self.available_rolls) > 0
 
 
-class TenthFrame(Frame):
+class LastFrame(Frame):
     def __init__(self):
-        super(TenthFrame, self).__init__()
-        self.available_rolls = [Roll(), Roll(), Roll()]
+        super(LastFrame, self).__init__()
 
     def roll(self, pins):
-        current_roll = self.available_rolls.pop(0)
+        current_roll = self.get_next_roll()
         current_roll.score = pins
         self.score += current_roll.score
-        if self.score == 10:
-            if self.has_rolls_left:
-                self.is_strike = True
-            else:
-                self.is_spare = True
         self.completed_rolls.append(current_roll)
+        if self.is_spare or self.is_strike:
+            self.available_rolls.append(Roll())
 
 
 class Roll(object):
     def __init__(self):
         self.score = 0
+
+    @property
+    def is_strike(self):
+        return self.score == 10

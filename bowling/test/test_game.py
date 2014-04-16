@@ -4,7 +4,7 @@ import unittest
 
 class BowlingGameTestGame(unittest.TestCase):
     def setUp(self):
-        self.game = Game()
+        self.game = Game(10)
 
     def roll_many(self, times, pins):
         for i in range(times):
@@ -62,7 +62,6 @@ class BowlingGameTestGame(unittest.TestCase):
         self.game.roll(10)
         self.game.roll(10)
         self.assertEquals(300, self.game.score())
-
 
 if __name__ == '__main__':
     unittest.main()
