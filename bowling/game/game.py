@@ -6,10 +6,13 @@ class Game(object):
         self.current_frame = self.available_frames.pop(0)
 
     def roll(self, pins):
-        if not self.current_frame.has_rolls_left:
-            self.completed_frames.append(self.current_frame)
-            self.current_frame = self.available_frames.pop(0)
-        self.current_frame.drop(pins)
+        if self.current_frame.has_no_rolls_left:
+            self.get_next_frame()
+        self.current_frame.roll(pins)
+
+    def get_next_frame(self):
+        self.completed_frames.append(self.current_frame)
+        self.current_frame = self.available_frames.pop(0)
 
     def score(self):
         self.completed_frames.append(self.current_frame)
@@ -40,7 +43,7 @@ class Frame(object):
         self.is_spare = False
         self.is_strike = False
 
-    def drop(self, pins):
+    def roll(self, pins):
         current_roll = self.available_rolls.pop(0)
         current_roll.score = pins
         self.score += current_roll.score
@@ -52,15 +55,13 @@ class Frame(object):
                 self.is_spare = True
         self.completed_rolls.append(current_roll)
 
+    @property
+    def has_no_rolls_left(self):
+        return len(self.available_rolls) == 0
 
     @property
     def has_rolls_left(self):
-        return False if len(self.available_rolls) == 0 else True
-
-
-class Roll(object):
-    def __init__(self):
-        self.score = 0
+        return len(self.available_rolls) > 0
 
 
 class TenthFrame(Frame):
@@ -68,7 +69,7 @@ class TenthFrame(Frame):
         super(TenthFrame, self).__init__()
         self.available_rolls = [Roll(), Roll(), Roll()]
 
-    def drop(self, pins):
+    def roll(self, pins):
         current_roll = self.available_rolls.pop(0)
         current_roll.score = pins
         self.score += current_roll.score
@@ -78,3 +79,8 @@ class TenthFrame(Frame):
             else:
                 self.is_spare = True
         self.completed_rolls.append(current_roll)
+
+
+class Roll(object):
+    def __init__(self):
+        self.score = 0
