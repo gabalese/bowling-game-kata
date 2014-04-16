@@ -25,9 +25,9 @@ class Game(object):
         points = 0
         for index, frame in enumerate(self.all_frames):
             points += frame.score
-            if frame.has_spare:
+            if frame.is_spare:
                 points += self.all_frames[index+1].completed_rolls[0].score
-            if frame.has_strike:
+            if frame.is_strike:
                 try:
                     points += self.all_frames[index+1].completed_rolls[0].score
                     points += self.all_frames[index+1].completed_rolls[1].score
@@ -48,30 +48,17 @@ class Frame(object):
         self.available_rolls = [Roll(), Roll()]
         self.completed_rolls = []
         self.score = 0
-        self.has_spare = False
-        self.has_strike = False
 
     def roll(self, pins):
         current_roll = self.get_next_roll()
         current_roll.score = pins
         self.score += current_roll.score
-        if self.is_spare:
-            self.has_spare = True
-        if current_roll.is_strike:
-            self.has_strike = True
-            self.available_rolls.pop(0)
         self.completed_rolls.append(current_roll)
+        if current_roll.is_strike:
+            self.available_rolls.pop(0)
 
     def get_next_roll(self):
         return self.available_rolls.pop(0)
-
-    @property
-    def is_spare(self):
-        return self.score == 10 and len(self.available_rolls) == 0
-
-    @property
-    def is_strike(self):
-        return self.score == 10 and len(self.available_rolls) > 0
 
     @property
     def has_no_rolls_left(self):
@@ -80,6 +67,14 @@ class Frame(object):
     @property
     def has_rolls_left(self):
         return len(self.available_rolls) > 0
+
+    @property
+    def is_spare(self):
+        return self.score == 10 and self.completed_rolls[0].score != 10
+
+    @property
+    def is_strike(self):
+        return self.score == 10 and self.completed_rolls[0].score == 10
 
 
 class LastFrame(Frame):
