@@ -18,13 +18,13 @@ class BowlingGameTestGame(unittest.TestCase):
         self.roll_many(20, 1)
         self.assertEquals(20, self.game.score())
 
-    def test_one_spare_and_nulls(self):
+    def test_one_spare_then_nulls(self):
         self.game.roll(5)
         self.game.roll(5)
         self.roll_many(18, 0)
         self.assertEquals(10, self.game.score())
 
-    def test_one_spare_and_ones(self):
+    def test_one_spare_then_ones(self):
         self.game.roll(5)
         self.game.roll(5)
         self.roll_many(18, 1)
