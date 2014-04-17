@@ -3,6 +3,7 @@ class Game(object):
         self.available_frames = self.create_frames(number_of_frames)
         self.completed_frames = []
         self.current_frame = self.available_frames.pop(0)
+        self.points = 0
 
     @staticmethod
     def create_frames(how_many):
@@ -22,25 +23,23 @@ class Game(object):
         self.current_frame = self.available_frames.pop(0)
 
     def score(self):
-        points = 0
-        for index, frame in enumerate(self.all_frames):
-            points += frame.score
-            if frame.is_spare:
-                points += self.all_frames[index+1].completed_rolls[0].score
-            if frame.is_strike:
-                try:
-                    points += self.all_frames[index+1].completed_rolls[0].score
-                    points += self.all_frames[index+1].completed_rolls[1].score
-                except IndexError:
-                    try:
-                        points += self.all_frames[index+2].completed_rolls[0].score
-                    except IndexError:
-                        pass
-        return points
+        return self.get_score(self.completed_frames + [self.current_frame], self.points)
 
-    @property
-    def all_frames(self):
-        return self.completed_frames + [self.current_frame]
+    def get_score(self, remaining_frames, points_accumulator):
+        points_accumulator += remaining_frames[0].score
+        if len(remaining_frames) == 1:
+            return points_accumulator
+        if remaining_frames[0].score == 10:
+            points_accumulator += self.get_roll_score(remaining_frames[1:]).next()
+        if remaining_frames[0].is_strike:
+            points_accumulator += self.get_roll_score(remaining_frames[1:]).next()
+        return self.get_score(remaining_frames[1:], points_accumulator)
+
+    @staticmethod
+    def get_roll_score(frames):
+        for frame in frames:
+            for roll in frame.completed_rolls:
+                yield roll.score
 
 
 class Frame(object):
