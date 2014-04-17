@@ -28,12 +28,12 @@ class Game(object):
         head, tail = remaining_frames[0], remaining_frames[1:]
         points_accumulator += head.score
         roll_scores = self.get_roll_scores(tail[0:2])
-        if len(tail) == 0:
+        if not tail:
             return points_accumulator
-        if head.is_spare:
+        if head.score == 10:
             points_accumulator += roll_scores.next()
         if head.is_strike:
-            points_accumulator += roll_scores.next() + roll_scores.next()
+            points_accumulator += roll_scores.next()
         return self.get_score(tail, points_accumulator)
 
     @staticmethod
